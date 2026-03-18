@@ -1,0 +1,18 @@
+services:
+  db: # Antes se llamaba postgres o booking_db, asegúrate de mantener el nombre que prefieras
+    image: postgres:15-alpine
+    container_name: booking_db
+    restart: always
+    environment:
+      POSTGRES_USER: booking
+      POSTGRES_PASSWORD: booking123
+      POSTGRES_DB: booking_db
+    ports:
+      - "5432:5432" # Esto abre la puerta para que tu Windows vea la base de datos
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Quitamos o comentamos la sección 'api' para que no use el puerto 3000
+
+volumes:
+  postgres_data:
