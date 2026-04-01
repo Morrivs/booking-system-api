@@ -30,21 +30,26 @@ export class AuthService {
     return tokens;
   }
 
-  async login(user:LoginDto){
+  async login(user: LoginDto) {
     const foundUser = await this.usersService.findByEmail(user.email);
-    if(!foundUser || !(await bcrypt.compare(user.password, foundUser.password))){
+    
+    if (!foundUser || !(await bcrypt.compare(user.password, foundUser.password))) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
     const tokens = await this.generateTokens(foundUser);
+    await this.saveRefreshToken(foundUser.id, tokens.refreshToken);
 
-  await this.saveRefreshToken(foundUser.id, tokens.refreshToken);
+    const { password, refreshToken, ...userWithoutPassword } = foundUser;
 
-  return tokens;
-
+    return {
+      tokens,
+      user: userWithoutPassword,
+    };
   }
 
-  async refreshTokens(refreshToken: string) {
-    const payload = await this.jwtService.verifyAsync(refreshToken, {
+  async refreshTokens(refreshTokenX: string) {
+    const payload = await this.jwtService.verifyAsync(refreshTokenX, {
       secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
     });
 
@@ -55,7 +60,7 @@ export class AuthService {
     }
 
     const isValid = await bcrypt.compare(
-      refreshToken,
+      refreshTokenX,
       user.refreshToken,
     );
 
@@ -66,8 +71,12 @@ export class AuthService {
     const tokens = await this.generateTokens(user);
 
     await this.saveRefreshToken(user.id, tokens.refreshToken);
+    const { password,refreshToken, ...userWithoutPassword } = user;
 
-    return tokens;
+    return {
+      tokens,
+      user: userWithoutPassword,
+    };;
   }
 
   private generateTokens(user: { id: string; email: string; role: Role }) {

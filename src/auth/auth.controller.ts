@@ -18,16 +18,22 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() data: LoginDto,
-    @Res({passthrough:true}) res: Response
+    @Res({ passthrough: true }) res: Response
   ) {
-    const tokens = await this.authService.login(data);
+    const { tokens, user } = await this.authService.login(data);
+
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly:true,
-      secure:false, //true en produccion
-      sameSite:'strict',
-      path: '/auth/resfresh'
-    })
-    return {accessToken:tokens.accessToken}
+      httpOnly: true,
+      secure: false, // true en producción
+      sameSite: 'strict',
+      path: '/auth/refresh', 
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return { 
+      access_token: tokens.accessToken, 
+      user 
+    };
   }
 
   @Post('refresh')
@@ -41,7 +47,18 @@ export class AuthController {
       throw new UnauthorizedException('No se encontró el refresh token en las cookies');
     }
 
-    return await this.authService.refreshTokens(refreshToken);
+    const { tokens, user } =  await this.authService.refreshTokens(refreshToken);
+    res.cookie('refreshToken', tokens.refreshToken, {
+      httpOnly: true,
+      secure: false, 
+      sameSite: 'strict',
+      path: '/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return { access_token: tokens.accessToken,
+      user
+     };
   }
 
   @UseGuards(JwtAuthGuard)

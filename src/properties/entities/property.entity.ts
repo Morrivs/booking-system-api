@@ -1,5 +1,5 @@
 export class Property {
-    id: number;
+    id: string;
     title: string;
     description: string;
     pricePerNight: number;
