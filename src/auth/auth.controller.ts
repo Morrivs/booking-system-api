@@ -4,11 +4,13 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import type { Response, Request } from 'express';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
 
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly configService: ConfigService) {
+  }
 
   @Post('register')
   async register(@Body() data: RegisterDto) {
@@ -21,11 +23,11 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response
   ) {
     const { tokens, user } = await this.authService.login(data);
-
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
     res.cookie('refreshToken', tokens.refreshToken, {
-      httpOnly: true,
-      secure: false, // true en producción
-      sameSite: 'strict',
+      httpOnly: true, 
+      secure: isProduction, 
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/auth/refresh', 
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -41,8 +43,8 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const refreshToken = req.cookies?.refreshToken; // Usa el optional chaining '?'
-
+    const refreshToken = req.cookies?.refreshToken; 
+    const isProduction = this.configService.get('NODE_ENV') === 'production';
     if (!refreshToken) {
       throw new UnauthorizedException('No se encontró el refresh token en las cookies');
     }
@@ -50,8 +52,8 @@ export class AuthController {
     const { tokens, user } =  await this.authService.refreshTokens(refreshToken);
     res.cookie('refreshToken', tokens.refreshToken, {
       httpOnly: true,
-      secure: false, 
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax',
       path: '/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });

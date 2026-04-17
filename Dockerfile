@@ -8,11 +8,11 @@ RUN npm install
 
 COPY . .
 
-# ¡ESTA LÍNEA ES CLAVE si usas Prisma!
 RUN npx prisma generate
 
-# Compilamos el código (esto crea la carpeta /dist)
 RUN npm run build
+
+RUN npx prisma migrate deploy
 
 EXPOSE 3000
 
