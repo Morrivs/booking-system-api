@@ -39,9 +39,10 @@ model Property {
   avgRating     Float    @default(0)
   reviewCount   Int      @default(0)
 
-  host     User      @relation(fields: [hostId], references: [id])
-  bookings Booking[]
-  reviews      Review[]
+  host            User      @relation(fields: [hostId], references: [id])
+  bookings      Booking[]
+  reviews       Review[]
+  images        PropertyImage[]
 }
 
 model Booking {
@@ -81,4 +82,14 @@ model Review {
 
   bookingId  String   @unique
   booking    Booking  @relation(fields: [bookingId], references: [id])
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  url        String   
+  propertyId String
+  
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
 }

@@ -98,7 +98,16 @@ export class BookingsService {
     return this.prisma.booking.findMany({
       where: { userId },
       include: {
-        property: true,
+        property: {
+          include:{
+            host: {
+              select:{
+                id:true,
+                name:true
+              }
+            }
+          }
+        },
       },
     });
   }
@@ -226,8 +235,18 @@ export class BookingsService {
         },
       },
       include: {
-        user: true,
-        property: true,
+        user: {
+          select:{
+            id:true,
+            name:true,
+            role:true
+          }
+        },
+        property: {
+          include: {
+            images: true
+          }
+        },
       },
     });
   }
